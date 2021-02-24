@@ -1,0 +1,6 @@
+[submodule "arduino/lib/CmdParser"]
+	path = arduino/lib/CmdParser
+	url = git@github.com:pvizeli/CmdParser.git
+[submodule "arduino/lib/ESPAsyncUDP"]
+	path = arduino/lib/ESPAsyncUDP
+	url = git@github.com:me-no-dev/ESPAsyncUDP.git
