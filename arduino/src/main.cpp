@@ -5,10 +5,14 @@
 #include <CmdParser.hpp>
 #include <ESP8266WiFi.h>
 #include <ESPAsyncUDP.h>
+#include <pb_decode.h>
+#include <pb_encode.h>
+#include "proto/z_message.pb.h"
 
 #define LED_PIN 4
 #define CHIPSET WS2811
-#define NUM_LEDS 31 + 21 + 31 + 21
+#define NUM_LEDS 104
+// #define NUM_LEDS 1
 #define BRIGHTNESS 255
 
 AsyncUDP udp;
@@ -20,13 +24,14 @@ CmdCallback_P<2> myCallback;
 
 void functWPSEnable(CmdParser *myParser);
 
+SetColorMessage message;
 
 void setup()
 {
     Serial.begin(115200);
     delay(100);
 
-    FastLED.addLeds<CHIPSET, LED_PIN>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<CHIPSET, LED_PIN>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
     FastLED.setBrightness(BRIGHTNESS);
     myCallback.addCmd(PSTR("WPS"), &functWPSEnable);
     myBuffer.setEcho(true);
@@ -46,9 +51,43 @@ void setup()
     if (Status == WL_CONNECTED)
     {
         Serial.printf("[WIFI] Successfully logged in to SSID '%s'-n", WiFi.SSID().c_str());
-    }else {
+    }
+    else
+    {
         Serial.println("[WIFI] could not connect to WiFi from store");
     }
+
+    if (udp.listen(1234))
+    {
+        Serial.print("UDP Listening on IP: ");
+        Serial.println(WiFi.localIP());
+        udp.onPacket([](AsyncUDPPacket packet) {
+            message = SetColorMessage_init_zero;
+            pb_istream_t stream = pb_istream_from_buffer(packet.data(), packet.length());
+
+            if (!pb_decode(&stream, SetColorMessage_fields, &message))
+            {
+                Serial.print("message could not be decoded");
+            }
+            else
+            {
+                pb_size_t idx = 0;
+                for (idx = 0; idx < NUM_LEDS; idx++)
+                {
+                    if(message.colors_count < idx) break;
+                    leds[idx].r = message.colors[idx].R;
+                    leds[idx].g = message.colors[idx].G;
+                    leds[idx].b = message.colors[idx].B;
+                }
+                FastLED.show();
+            }
+        });
+    }
+
+    leds[0].r = 50;
+    leds[0].g = 50;
+    leds[0].b = 50;
+    FastLED.show();
 }
 
 void loop()
@@ -73,7 +112,9 @@ void functWPSEnable(CmdParser *myParser)
         {
             wpsSuccess = false;
         }
-    }else {
+    }
+    else
+    {
         Serial.println("[WIFI] WPS configuration failed");
     }
 }

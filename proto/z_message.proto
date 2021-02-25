@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message MessageColor
+{
+    uint32 R = 1;
+    uint32 G = 2;
+    uint32 B = 3;
+}
+
+message SetColorMessage
+{
+    repeated MessageColor colors = 1;
+}
