@@ -56,10 +56,16 @@ width = config['numLedsWidth']
 height = config['numLedsHeight']
 borders = [[0, 0, 0]] * (2 * width + 2 * height)
 
+BOTTOM = [[0, 0, 0]] * config['numLedsWidth']
+RIGHT = [[0, 0, 0]] * config['numLedsHeight']
+TOP = [[0, 0, 0]] * config['numLedsWidth']
+LEFT = [[0, 0, 0]] * config['numLedsHeight']
+
 
 def do_exit(*args):
     sock.close()
     pass
+
 
 def create_color_message_entry(x):
     color = MessageColor()
@@ -68,21 +74,30 @@ def create_color_message_entry(x):
     color.B = x[2]
     return color
 
+
 # @profile
 def loop_step():
     sct_img = sct.grab(screen)
     image = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
     image = image.resize((width, height), Image.ANTIALIAS)
 
-    for w in range(width):
-        borders[w] = image.getpixel((w, height - 1))
-        borders[w + width] = image.getpixel((width - w - 1, 0))
-    for h in range(height):
-        borders[h + width + height] = image.getpixel((width - 1, height - h - 1))
-        borders[h + 2 * width + height] = image.getpixel((0, h))
+    for w in range(config['numLedsWidth']):
+        BOTTOM[w] = image.getpixel((w, config['numLedsHeight'] - 1))
+        TOP[w] = image.getpixel((config['numLedsWidth'] - w - 1, 0))
+    
+    for h in range(config['numLedsHeight']):
+        RIGHT[h] = image.getpixel((config['numLedsWidth'] - 1, config['numLedsHeight'] - h - 1))
+        LEFT[h] = image.getpixel((0, h))
+       
+
+    lightstrip = []
+    lightstrip += BOTTOM
+    lightstrip += RIGHT
+    lightstrip += TOP
+    lightstrip += LEFT
 
     # GRB
-    colors = [create_color_message_entry(x) for x in borders]
+    colors = [create_color_message_entry(x) for x in lightstrip]
     message = SetColorMessage()
     message.colors.extend(colors)
     sock.send(message.SerializeToString())
@@ -103,5 +118,5 @@ if __name__ == '__main__':
             sleep_time = interval - delta_time
             if sleep_time > 0:
                 sleep(sleep_time)
-            # else:
-            #     print(f'loop time exhausted by {-1 * sleep_time}')
+            else:
+                print(f'loop time exhausted by {-1 * sleep_time}')

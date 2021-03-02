@@ -67,14 +67,13 @@ void setup()
 
             if (!pb_decode(&stream, SetColorMessage_fields, &message))
             {
-                Serial.print("message could not be decoded");
+                Serial.println("message could not be decoded");
             }
             else
             {
-                pb_size_t idx = 0;
+                uint8_t idx = 0;
                 for (idx = 0; idx < NUM_LEDS; idx++)
                 {
-                    if(message.colors_count < idx) break;
                     leds[idx].r = message.colors[idx].R;
                     leds[idx].g = message.colors[idx].G;
                     leds[idx].b = message.colors[idx].B;
@@ -84,9 +83,13 @@ void setup()
         });
     }
 
-    leds[0].r = 50;
-    leds[0].g = 50;
-    leds[0].b = 50;
+    uint8_t idx = 0;
+    for (idx = 0; idx < NUM_LEDS; idx++)
+    {
+        leds[idx].r = 0;
+        leds[idx].g = 0;
+        leds[idx].b = 0;
+    }
     FastLED.show();
 }
 
