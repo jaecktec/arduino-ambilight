@@ -1,9 +1,9 @@
 # arduino-ambilight
 
-contents:
-pythonapp: script that computes the colors for the ambilight and sends the values over UDP/protobuf to an arduino
-arduino: FastLED based arduino app that lisetns on UDP port 1234 and waits for UDO/protobuf RGB values that get applied to the led strip
-protobuf: contains a docker image with needed config to compile protobuf files (optional)
+contents:  
+pythonapp: script that computes the colors for the ambilight and sends the values over UDP/protobuf to an arduino. 
+arduino: FastLED based arduino app that lisetns on UDP port 1234 and waits for UDO/protobuf RGB values that get applied to the led strip. 
+protobuf: contains a docker image with needed config to compile protobuf files (optional). 
 
 How does the ambilight work:
 
