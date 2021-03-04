@@ -7,7 +7,7 @@ protobuf: contains a docker image with needed config to compile protobuf files (
 
 How does the ambilight work:
 
-1) python script takes a screenshot every 10 seconds  
+1) python script takes a screenshot 10 times per second  
 2) resizes the image to 31*21 (amount of LEDs I have behind my screen) 
 3) collects the borders and assigns it to an array 
 4) sends led values encoded with protobuf to Arduino
