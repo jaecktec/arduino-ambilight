@@ -5,13 +5,17 @@ import io
 import pstats
 from proto.z_message_pb2 import SetColorMessage, MessageColor
 from time import sleep, time
+import math
+import d3dshot
 
 from PIL import Image
 from mss import mss
 from socket import socket, AF_INET, SOCK_DGRAM
+import threading
 
 IPADDR = '192.168.188.50'
 PORTNUM = 1234
+d = d3dshot.create()
 
 
 def profile(fnc):
@@ -30,9 +34,8 @@ def profile(fnc):
     return inner
 
 
-sock = socket(AF_INET, SOCK_DGRAM, 0)
 config = {
-    "loops_per_sec": 10.0,
+    "loops_per_sec": 15,
     "numLedsWidth": 31,
     "numLedsHeight": 21,
     "screen": 1
@@ -54,17 +57,13 @@ def set_colors(colors):
 
 width = config['numLedsWidth']
 height = config['numLedsHeight']
-borders = [[0, 0, 0]] * (2 * width + 2 * height)
+num_leds = (2 * width + 2 * height)
+borders = [[0, 0, 0]] * num_leds
 
 BOTTOM = [[0, 0, 0]] * config['numLedsWidth']
 RIGHT = [[0, 0, 0]] * config['numLedsHeight']
 TOP = [[0, 0, 0]] * config['numLedsWidth']
 LEFT = [[0, 0, 0]] * config['numLedsHeight']
-
-
-def do_exit(*args):
-    sock.close()
-    pass
 
 
 def create_color_message_entry(x):
@@ -75,48 +74,73 @@ def create_color_message_entry(x):
     return color
 
 
-# @profile
-def loop_step():
-    sct_img = sct.grab(screen)
-    image = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
-    image = image.resize((width, height), Image.ANTIALIAS)
-
-    for w in range(config['numLedsWidth']):
-        BOTTOM[w] = image.getpixel((w, config['numLedsHeight'] - 1))
-        TOP[w] = image.getpixel((config['numLedsWidth'] - w - 1, 0))
-    
-    for h in range(config['numLedsHeight']):
-        RIGHT[h] = image.getpixel((config['numLedsWidth'] - 1, config['numLedsHeight'] - h - 1))
-        LEFT[h] = image.getpixel((0, h))
-       
-
-    lightstrip = []
-    lightstrip += BOTTOM
-    lightstrip += RIGHT
-    lightstrip += TOP
-    lightstrip += LEFT
-
-    # GRB
+def set_color(color):
+    sock = socket(AF_INET, SOCK_DGRAM, 0)
+    sock.connect((IPADDR, PORTNUM))
+    lightstrip = [color] * num_leds
     colors = [create_color_message_entry(x) for x in lightstrip]
     message = SetColorMessage()
     message.colors.extend(colors)
+    message.brightness = 255
     sock.send(message.SerializeToString())
+    sock.close()
+    pass
 
 
-if __name__ == '__main__':
-    atexit.register(do_exit)
-    interval = 1 / config['loops_per_sec']
+class CaptureBordersThread(threading.Thread):
+    def __init__(self):
+        super().__init__()
+        self.running = True
+        self.sock = socket(AF_INET, SOCK_DGRAM, 0)
 
-    sock.connect((IPADDR, PORTNUM))
+    def stop(self):
+        self.running = False
+        pass
 
-    with mss() as sct:
-        screen = sct.monitors[config['screen']]
-        while True:
+    # @profile
+    def run(self):
+        self.sock.connect((IPADDR, PORTNUM))
+
+        interval = 1 / config['loops_per_sec']
+        while self.running:
             start_time = time()
-            loop_step()
+            image = d.screenshot()
+            image = image.resize((width, height), Image.NEAREST)
+
+            for w in range(config['numLedsWidth']):
+                BOTTOM[w] = image.getpixel((w, config['numLedsHeight'] - 1))
+                TOP[w] = image.getpixel((config['numLedsWidth'] - w - 1, 0))
+
+            for h in range(config['numLedsHeight']):
+                RIGHT[h] = image.getpixel((config['numLedsWidth'] - 1, config['numLedsHeight'] - h - 1))
+                LEFT[h] = image.getpixel((0, h))
+
+            lightstrip = []
+            lightstrip += BOTTOM
+            lightstrip += RIGHT
+            lightstrip += TOP
+            lightstrip += LEFT
+
+            colors = [create_color_message_entry(x) for x in lightstrip]
+            message = SetColorMessage()
+            message.colors.extend(colors)
+            message.brightness = 255
+            self.sock.send(message.SerializeToString())
+
             delta_time = time() - start_time
             sleep_time = interval - delta_time
             if sleep_time > 0:
                 sleep(sleep_time)
             else:
                 print(f'loop time exhausted by {-1 * sleep_time}')
+
+
+if __name__ == '__main__':
+    capture_process = CaptureBordersThread()
+    write_process = UpdateColorsThread()
+    capture_process.start()
+    write_process.start()
+    capture_process.join()
+    write_process.join()
+
+    pass

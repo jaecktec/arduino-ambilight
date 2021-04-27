@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x15proto/z_message.proto\"/\n\x0cMessageColor\x12\t\n\x01R\x18\x01 \x01(\r\x12\t\n\x01G\x18\x02 \x01(\r\x12\t\n\x01\x42\x18\x03 \x01(\r\"0\n\x0fSetColorMessage\x12\x1d\n\x06\x63olors\x18\x01 \x03(\x0b\x32\r.MessageColorb\x06proto3'
+  serialized_pb=b'\n\x15proto/z_message.proto\"/\n\x0cMessageColor\x12\t\n\x01R\x18\x01 \x01(\r\x12\t\n\x01G\x18\x02 \x01(\r\x12\t\n\x01\x42\x18\x03 \x01(\r\"D\n\x0fSetColorMessage\x12\x12\n\nbrightness\x18\x01 \x01(\r\x12\x1d\n\x06\x63olors\x18\x02 \x03(\x0b\x32\r.MessageColorb\x06proto3'
 )
 
 
@@ -80,8 +80,15 @@ _SETCOLORMESSAGE = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='colors', full_name='SetColorMessage.colors', index=0,
-      number=1, type=11, cpp_type=10, label=3,
+      name='brightness', full_name='SetColorMessage.brightness', index=0,
+      number=1, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='colors', full_name='SetColorMessage.colors', index=1,
+      number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -99,7 +106,7 @@ _SETCOLORMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=74,
-  serialized_end=122,
+  serialized_end=142,
 )
 
 _SETCOLORMESSAGE.fields_by_name['colors'].message_type = _MESSAGECOLOR

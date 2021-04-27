@@ -1,3 +1,7 @@
 protobuf
 mss
-pillow
+pillow==7.1.2
+numpy
+PySide2
+d3dshot
+py2app

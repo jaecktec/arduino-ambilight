@@ -9,5 +9,6 @@ message MessageColor
 
 message SetColorMessage
 {
-    repeated MessageColor colors = 1;
+    uint32 brightness = 1;
+    repeated MessageColor colors = 2;
 }

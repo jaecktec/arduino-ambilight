@@ -26,6 +26,29 @@ void functWPSEnable(CmdParser *myParser);
 
 SetColorMessage message;
 
+void udpPackageHandler(AsyncUDPPacket packet)
+{
+    message = SetColorMessage_init_zero;
+    pb_istream_t stream = pb_istream_from_buffer(packet.data(), packet.length());
+
+    if (!pb_decode(&stream, SetColorMessage_fields, &message))
+    {
+        Serial.println("message could not be decoded");
+    }
+    else
+    {
+        uint8_t idx = 0;
+        for (idx = 0; idx < NUM_LEDS; idx++)
+        {
+            leds[idx].r = message.colors[idx].R;
+            leds[idx].g = message.colors[idx].G;
+            leds[idx].b = message.colors[idx].B;
+        }
+        FastLED.setBrightness(message.brightness);
+        FastLED.show();
+    }
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -61,26 +84,7 @@ void setup()
     {
         Serial.print("UDP Listening on IP: ");
         Serial.println(WiFi.localIP());
-        udp.onPacket([](AsyncUDPPacket packet) {
-            message = SetColorMessage_init_zero;
-            pb_istream_t stream = pb_istream_from_buffer(packet.data(), packet.length());
-
-            if (!pb_decode(&stream, SetColorMessage_fields, &message))
-            {
-                Serial.println("message could not be decoded");
-            }
-            else
-            {
-                uint8_t idx = 0;
-                for (idx = 0; idx < NUM_LEDS; idx++)
-                {
-                    leds[idx].r = message.colors[idx].R;
-                    leds[idx].g = message.colors[idx].G;
-                    leds[idx].b = message.colors[idx].B;
-                }
-                FastLED.show();
-            }
-        });
+        udp.onPacket(udpPackageHandler);
     }
 
     uint8_t idx = 0;
